@@ -98,3 +98,18 @@ services:
     ports:
       - "${RADARR_PORT}:7878"
     restart: ${RESTART_POLICY}
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${BASE_PATH}/sonarr/config:/config
+      - ${MEDIA_PATH}/video/Shows:/shows #optional
+      - ${DOWNLOADS_PATH}:/downloads #optional
+    ports:
+      - 8989:8989
+    restart: unless-stopped
