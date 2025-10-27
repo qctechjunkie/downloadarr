@@ -1,0 +1,100 @@
+# Media Download Stack - Arr Services with qBittorrent and FlareSolverr
+# Configure your environment variables in .env file before running
+
+services:
+  # CloudFlare solver for protected trackers
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL}
+      - LOG_HTML=${LOG_HTML}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER}
+      - TZ=${TZ}
+    ports:
+      - "${FLARESOLVERR_PORT}:8191"
+    restart: ${RESTART_POLICY}
+
+  # Music discovery and organization
+  huntarr:
+    image: huntarr/huntarr:latest
+    container_name: huntarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${BASE_PATH}/huntarr/config:/config
+    ports:
+      - "${HUNTARR_PORT}:9705"
+    restart: ${RESTART_POLICY}
+
+  # Music collection manager
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${BASE_PATH}/lidarr/config:/config
+      - ${MEDIA_PATH}/music:/music
+      - ${DOWNLOADS_PATH}:/downloads
+    ports:
+      - "${LIDARR_PORT}:8686"
+    restart: ${RESTART_POLICY}
+
+  # Indexer manager for torrent/usenet sources
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${BASE_PATH}/prowlarr/config:/config
+    ports:
+      - "${PROWLARR_PORT}:9696"
+    restart: ${RESTART_POLICY}
+
+  # BitTorrent client
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - UMASK=${UMASK}
+      - WEBUI_PORT=${QBITTORRENT_PORT}
+      - FILESYSTEM_CACHE=${FILESYSTEM_CACHE}
+      - WEBUI_AUTH_SUBNETWHITELIST=${WEBUI_AUTH_SUBNETWHITELIST}
+      - WEBUI_AUTH_LOCAL_AUTH_BYPASS=${WEBUI_AUTH_LOCAL_AUTH_BYPASS}
+    volumes:
+      - ${BASE_PATH}/qbittorrent/config:/config
+      - ${BASE_PATH}/qbittorrent/downloads:/downloads
+      - ${BASE_PATH}/qbittorrent/incomplete:/incomplete
+    ports:
+      - "${QBITTORRENT_PORT}:${QBITTORRENT_PORT}"
+      - "${QBITTORRENT_PEER_PORT}:${QBITTORRENT_PEER_PORT}"
+      - "${QBITTORRENT_PEER_PORT}:${QBITTORRENT_PEER_PORT}/udp"
+    restart: ${RESTART_POLICY}
+    mem_limit: ${QBITTORRENT_MEMORY_LIMIT}
+
+  # Movie collection manager
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${BASE_PATH}/radarr/config:/config
+      - ${MEDIA_PATH}/video/Movie:/movies
+      - ${DOWNLOADS_PATH}:/downloads
+    ports:
+      - "${RADARR_PORT}:7878"
+    restart: ${RESTART_POLICY}
